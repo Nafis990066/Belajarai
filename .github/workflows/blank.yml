@@ -1,20 +1,23 @@
-
-name: Build BelajarAI APK
+name: Build BelajarAI GPT
 
 on:
-  workflow_dispatch:
   push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ambil file repository
+      - name: Ambil repository
         uses: actions/checkout@v4
 
-      - name: Siapkan Java 17
+      - name: Ekstrak source ZIP
+        run: |
+          unzip -o BelajarAI-GPT-fixed.zip -d extracted
+          ls extracted/BelajarAI
+
+      - name: Siapkan Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -22,39 +25,22 @@ jobs:
 
       - name: Siapkan Android SDK
         uses: android-actions/setup-android@v4
+
+      - name: Instal Android SDK
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
       - name: Siapkan Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: Ekstrak file proyek
-        run: |
-          mkdir -p extracted
-          find . -maxdepth 2 -name "*.zip" -print -quit | grep -q . || (echo "File ZIP proyek tidak ditemukan" && exit 1)
-          ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" -print -quit)
-          unzip -q "$ZIP_FILE" -d extracted
-          SETTINGS=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) | head -n 1)
-          if [ -z "$SETTINGS" ]; then
-            echo "File settings.gradle tidak ditemukan"
-            exit 1
-          fi
-          PROJECT_DIR=$(dirname "$SETTINGS")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-      - name: Install Android SDK
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
-
       - name: Build APK
-        run: |
-          cd "$PROJECT_DIR"
-          gradle assembleDebug
+        working-directory: extracted/BelajarAI
+        run: gradle assembleDebug --no-daemon
 
       - name: Simpan APK
         uses: actions/upload-artifact@v4
         with:
-          name: BelajarAI-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          
+          name: BelajarAI-GPT-APK
+          path: extracted/BelajarAI/app/build/outputs/apk/debug/app-debug.apk
