@@ -14,7 +14,7 @@ jobs:
 
       - name: Ekstrak source ZIP
         run: |
-          unzip -o BelajarAI-GPT-fixed.zip -d extracted
+          unzip -o BelajarAI-HuggingFace.zip -d extracted
           ls extracted/BelajarAI
 
       - name: Siapkan Java
